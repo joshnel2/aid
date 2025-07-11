@@ -1,0 +1,44 @@
+{% extends "base.html" %}
+{% block title %}Dispute #{{ dispute_id }}{% endblock %}
+{% block content %}
+<h2>Dispute #{{ dispute_id }}</h2>
+<p>Share this link with the other party: {{ link }}</p>
+<h3>Parties:</h3>
+<ul>
+{% for party in parties %}
+    <li>{{ party[0] }} - {% if party[1] %}Submitted{% else %}Pending{% endif %}</li>
+{% endfor %}
+</ul>
+<h3>Submit Your Side</h3>
+<form method="post" action="{{ url_for('submit_truth', dispute_id=dispute_id) }}" id="payment-form">
+    <textarea name="truth" placeholder="Describe your side of the story..."></textarea>
+    <div id="card-element"></div>
+    <button type="submit">Submit & Pay $1</button>
+</form>
+<script>
+    var stripe = Stripe('pk_test_51RjlpnPTSyCDuRTkHHgfsc0iPAk8DBwpdjbaGaMaovbZ4hHuHLLMycoIb9wenJVABgXw2AMdl1SKZK0OCrY7So2K00VNrKfxCo');  // Updated with provided test key
+    var elements = stripe.elements();
+    var card = elements.create('card');
+    card.mount('#card-element');
+    var form = document.getElementById('payment-form');
+    form.addEventListener('submit', function(event) {
+        event.preventDefault();
+        stripe.createToken(card).then(function(result) {
+            if (result.error) {
+                console.error(result.error.message);
+            } else {
+                var hiddenInput = document.createElement('input');
+                hiddenInput.setAttribute('type', 'hidden');
+                hiddenInput.setAttribute('name', 'stripeToken');
+                hiddenInput.setAttribute('value', result.token.id);
+                form.appendChild(hiddenInput);
+                form.submit();
+            }
+        });
+    });
+</script>
+{% if verdict %}
+<h3>Resolution Verdict:</h3>
+<p>{{ verdict }}</p>
+{% endif %}
+{% endblock %}
